@@ -1,0 +1,18 @@
+	XREF main
+	XDEF _Startup
+	RAMStart: EQU $2000
+	StackTop: EQU $2100
+	RAMEnd:   EQU $4000
+	RPAGE: 	  EQU $0016
+	PPAGE: 	  EQU $0015
+	IVBR:	  EQU $0121
+	ORG $4000
+_Startup:
+	LDS #StackTop
+	LDX #RAMStart
+CLRRAM:
+	CLRW 2,X+
+	CPX  #RAMEnd
+	BNE  CLRRAM
+	MOVB #$FF,IVBR
+	JMP  main
