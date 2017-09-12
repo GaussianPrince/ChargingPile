@@ -1,10 +1,10 @@
 #ifndef _HMI_H
 #define _HMI_H
 #include "Include.h"
-#define  ERROREDGE    9
+#define  ERROREDGE    7
 typedef union 
 {
-	UInt8 data[19];
+	UInt8 data[21];
 	struct 
 	{
 		UInt8 CurrentPageNum;
@@ -21,14 +21,16 @@ typedef union
 		UInt8 BackToChargingPage;
 		UInt8 AdminEntry;
 		UInt8 NetworkMethod[3];
+		UInt8 NetConfigType;
 		UInt8 NetConfigSave;
 		UInt8 NetConfigRead;
+		UInt8 TieredEchoCmd;
 	}Compts;
 }HMIOperationStruct;
 
 typedef union 
 {
-	UInt8 data[951];
+	UInt8 data[1070];
 	struct 
 	{
 		struct//418BYTES
@@ -53,7 +55,7 @@ typedef union
 			UInt8 GunConText[32];
 			UInt8 GunUnConText[32];
 			UInt8 CardStartKey[6];
-			UInt8 TimingStartKey[6]
+			UInt8 TimingStartKey[6];
 		}CardOperationPage;
 		struct//12BYTES
 		{
@@ -98,6 +100,14 @@ typedef union
 			UInt8 LocalIPRec3[8];
 			UInt8 LocalIPRec4[8];
 		}ConfigPage;
+		UInt8 CardAgain[16];
+		UInt8 CardAgainClr[16];
+		UInt8 EchoPrice[8];
+		UInt8 EchoCardEnable[12];
+		UInt8 EchoCardDisable[12];
+		UInt8 EchoEnd[16];
+		UInt8 EchoEndClr[16];
+		UInt8 HMIWriteRTC[13];
 		UInt8 WritePageReg[7];
 		UInt8 WriteNetConFlag[8];
 	}Compts;
@@ -106,10 +116,18 @@ typedef union
 #pragma DATA_SEG __RPAGE_SEG     RAMF0_T
 extern HMIOperationStruct HMIOperationBuff;
 extern HMITxCmd			  HMITxCmdBuff;
-extern UInt8 PwdErrorCounter;
 extern UInt32 AdminPwd;
 extern UInt8  ConfigWait;
+extern UInt8  PwdCounter;
+extern UInt8  ExistError;
+extern UInt8  ErrorSendOnce;
 #pragma DATA_SEG DEFAULT
+extern UInt8  ErrorTypeMap[7];
+extern UInt8  FaultBitCompare[8];
+extern UInt8  WaitInHome;
+extern UInt16 WaitBackHome;
+extern UInt8  Calender;
+extern UInt8  PwdErrorCounter;
 extern void HMIAnalysis(void);
 extern void HMIDisplayControl(void);
 extern void SCI0Init(void);

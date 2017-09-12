@@ -1,7 +1,7 @@
 #ifndef _GUN_H
 #define _GUN_H
 #include "Include.h"
-#define _FLASHDEBUG
+//#define _FLASHDEBUG
 typedef union
 {
 	UInt8 data[4];

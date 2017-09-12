@@ -9,7 +9,7 @@
 
 #pragma MESSAGE DISABLE C1420
 UInt8 AppStk1[128];
-UInt8 AppStk2[64];
+//UInt8 AppStk2[64];
 UInt8 AppStk3[64];
 UInt8 AppStk4[64];
 UInt8 AppStk5[64];
@@ -23,6 +23,11 @@ UInt8 AppStk12[64];
 UInt8 AppStk13[64];
 UInt8 AppStk14[64];
 UInt8 AppStk15[128];
+UInt8 AppStk16[128];
+UInt8 AppStk17[128];
+UInt8 AppStk18[128];
+UInt8 AppStk19[128];
+UInt8 AppStk20[128];
 void main(void)
 {
 	OSInit();
@@ -34,6 +39,8 @@ void main(void)
 	GunInit();
 	EFlashInit();
 	SCI5Init();
+	SCI4Init();
+	SCI0Init();
 
 	LocalTimeBuffInit();
 	TimerOperationBuffInit();
@@ -64,6 +71,9 @@ void main(void)
 	OSTaskAddrTable[OSStaticInc] = OSIDleTask;
 	OSAddTask(OSIDleTask, (OSIdleStk + 128), OSIdleStk, 0, 0);
 
+	/*OSTaskAddrTable[OSStaticInc] = OSFeedDog;
+	OSAddTask(OSFeedDog, (AppStk2 + 64), AppStk2, 0, 150);*/
+
 	OSTaskAddrTable[OSStaticInc] = PowerStateControl;
 	OSAddTask(PowerStateControl, (AppStk7 + 128), AppStk7, 0, 40);
 
@@ -86,8 +96,6 @@ void main(void)
 	OSTaskAddrTable[OSStaticInc] = ChargingStateControl;
 	OSAddTask(ChargingStateControl, (AppStk1 + 128), AppStk1, 0, 2);
 
-	OSTaskAddrTable[OSStaticInc] = OSFeedDog;
-	OSAddTask(OSFeedDog, (AppStk2 + 64), AppStk2, 0, 180);
 
 	OSTaskAddrTable[OSStaticInc] = LocalTimeCounter;
 	OSAddTask(LocalTimeCounter, (AppStk8 + 64), AppStk8, 0, 200);
@@ -108,7 +116,61 @@ void main(void)
 	OSAddTask(ElectronicLockStateControl, (AppStk14 + 64), AppStk14, 0, 20);
 
 	OSTaskAddrTable[OSStaticInc] = CardStateControl;
-	OSAddTask(CardStateControl, (AppStk15 + 128), AppStk15, 0, 80);
+	OSAddTask(CardStateControl, (AppStk15 + 128), AppStk15, 0, 60);
 
+	OSTaskAddrTable[OSStaticInc] = HMIDisplayControl;
+	OSAddTask(HMIDisplayControl, (AppStk16 + 128), AppStk16, 0, 6);
+
+	OSTaskAddrTable[OSStaticInc] = SCI4Analysis;
+	OSAddTask(SCI4Analysis, (AppStk17 + 128), AppStk18, 0, 0);
+
+	OSTaskAddrTable[OSStaticInc] = SCI4StateControl;
+	OSAddTask(SCI4StateControl, (AppStk18 + 128), (AppStk18), 0, 201);
+
+	OSTaskAddrTable[OSStaticInc] = EFlashStateControl;
+	OSAddTask(EFlashStateControl, (AppStk19 + 128), (AppStk19), 0, 205);
+
+	OSTaskAddrTable[OSStaticInc] = ComFaultStateControl;
+	OSAddTask(ComFaultStateControl, (AppStk20 + 128), AppStk20, 0, 202);
+
+//	asm MOVB #$F1, RPAGE;
+	EFlashReadWord(0x10, 0x00, (UInt16 *far)EFlashMainBuff.data, 73);
+	if (EFlashMainBuff.Compts.SerialNum == 0xFFFFFFFF)
+	{
+		SerialNumTmp = 0;
+		EFlashMainBuff.Compts.EndSectorNum = 1;
+	}
+	if (EFlashMainBuff.Compts.PileNum[0] != 0xFF)
+	{
+		for (ChargingEnd = 0; ChargingEnd < 10; ChargingEnd++)
+		{
+			asm MOVB #$F1, RPAGE;
+			UserMoneyConvert.UInt8_Data[0] = EFlashMainBuff.Compts.PileNum[ChargingEnd];
+			asm MOVB #$F0, RPAGE;
+			HMITxCmdBuff.Compts.ConfigPage.PileNumRec[ChargingEnd + 6] = UserMoneyConvert.UInt8_Data[0];
+		}
+	}
+	asm MOVB #$F1, RPAGE;
+	if (EFlashMainBuff.Compts.EndSectorNum != 0xFF)
+	{
+		UserIDConvert.UInt16_Data[0] = EFlashMainBuff.Compts.EndSectorNum;
+		UserMoneyConvert.UInt16_Data[0] = 0x100 * EFlashMainBuff.Compts.EndSectorNum;
+		EFlashReadWord(0x10, UserMoneyConvert.UInt16_Data[0], (UInt16 *far)EFlashDataBlockBuff.data, 103);
+		if (EFlashDataBlockBuff.Compts.UsedBlock == 0xFF)
+		{
+			EFlashDataBlockBuff.Compts.UsedBlock = 0;
+		}
+	}
+	if (EFlashMainBuff.Compts.TieredPrice[0] != 0xFFFF)
+	{
+		for (ChargingEnd = 0; ChargingEnd < 24; ChargingEnd++)
+		{
+			DiffPriceBuff.Compts.CloudDiffPrice[ChargingEnd] = EFlashMainBuff.Compts.TieredPrice[ChargingEnd];
+		}
+	}
+	if (EFlashMainBuff.Compts.ServicePrice != 0xFFFFFFFF)
+	{
+		DiffPriceBuff.Compts.CloudServicePrice = EFlashMainBuff.Compts.ServicePrice;
+	}
 	OSStart();
 }

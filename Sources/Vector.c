@@ -13,11 +13,12 @@ extern void near CAN2BMS(void);
 extern void near TimerService(void);
 extern void near SCI1Meter(void);
 extern void near SCI5Card(void);
-//extern void near SCI0HMI(void);
+extern void near SCI0HMI(void);
+extern void near SCI4Net(void);
 #pragma CODE_SEG __NEAR_SEG NON_BANKED /* Interrupt section for this module. Placement will be in NON_BANKED area. */
 __interrupt void UnimplementedISR(void)
 {
-  asm BGND;
+  asm BRA *;
 }
 
 typedef void(*near tIsrFunc)(void);
@@ -81,7 +82,7 @@ const tIsrFunc _vect[] @0xFF10 = {     /* Interrupt table */
 	UnimplementedISR,                 /*80 vector 63 */
 	UnimplementedISR,                 /*82 vector 62 */
 	SCI5Card,                 /*84 vector 61 */
-	UnimplementedISR,                 /*86 vector 60 */
+	SCI4Net,                 /*86 vector 60 */
 	UnimplementedISR,                 /*88 vector 59 */
 	UnimplementedISR,                 /*8a vector 58 */
 	UnimplementedISR,                 /*8c vector 57 */
@@ -121,7 +122,7 @@ const tIsrFunc _vect[] @0xFF10 = {     /* Interrupt table */
 	UnimplementedISR,                 /*d0 vector 23 */
 	UnimplementedISR,                 /*d2 vector 22 */
 	SCI1Meter,                 /*d4 vector 21 */
-	UnimplementedISR,                 /*d6 vector 20 */
+	SCI0HMI,                 /*d6 vector 20 */
 	UnimplementedISR,                 /*d8 vector 19 */
 	UnimplementedISR,                 /*da vector 18 */
 	UnimplementedISR,                 /*dc vector 17 */

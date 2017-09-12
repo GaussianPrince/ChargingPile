@@ -45,8 +45,8 @@ NextBlock :
 		PULD
 Copy :
 		PSHD
-		LDAA 1,X +
-		GSTAA 1,Y +
+		LDAA 1, X +
+		GSTAA 1, Y +
 		PULD
 		MOVB #$55, ARMCOP
 		MOVB #$AA, ARMCOP

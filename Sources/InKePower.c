@@ -106,7 +106,7 @@ void InKeCANIDInit(void)
 void InKeConfig(void)
 {
 	UInt8	n;
-	if (InKePowerOperationBuff.Compts.StartTimerFlag == 0)
+	if (InKePowerOperationBuff.Compts.StartTimerFlag == 0||CAN0OperationBuff.Compts.ModuleOperateSeq==2)
 	{
 		asm BSET InKePowerOperationBuff.data[1], #$01;
 		InKePowerOperationBuff.Compts.InKeCounter=0;
@@ -194,7 +194,7 @@ void InKePowerOn(void)
 }
 void InKePowerOff(void)
 {
-	if (InKePowerOperationBuff.Compts.LoopPowerOffFlowFlag == 0)
+	if (InKePowerOperationBuff.Compts.LoopPowerOffFlowFlag == 0||CAN0OperationBuff.Compts.ModuleOperateSeq==2)
 	{
 		InKePowerOperationBuff.Compts.LoopPowerOffFlowFlag = 1;
 		CAN0OperationBuff.Compts.ModuleSeq = 0;

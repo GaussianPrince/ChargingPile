@@ -38,9 +38,26 @@ typedef union
 	struct 
 	{
 		UInt8 BMSComFault : 1;
-		UInt8 : 7;
+		UInt8 EmergencyFault : 1;
+		UInt8 MeterFault : 1;
+		UInt8 CardFault : 1;
+		UInt8 PowerModuleFault : 1;
+		UInt8 NoFleedFault : 1;
+		UInt8 RequestHighVolFault : 1;
+		UInt8 : 1;
 	}Compts;
 }CharFaultStruct;
+typedef union
+{
+	UInt8 data[3];
+	struct 
+	{
+		UInt8 MeterOverTimeCounter;
+		UInt8 CardOverTimeCounter;
+		UInt8 PowerOverTimeCounter;
+	}Compts;
+}ComOverTime;
+extern ComOverTime	   ComOverTimeBuff;
 extern CharFaultStruct CharFaultBuff;
 extern void  BMSComCtlBuffInit(void);
 extern void  BMSStaMacBuffInit(void);
@@ -62,4 +79,6 @@ extern void  ChargingAction(void);
 extern void  EndAction(void);
 extern void  ErrorAction(void);
 extern void  ChargingStateControl(void);
+extern void  ClearChargingControlData(void);
+extern void  ComFaultStateControl(void);
 #endif

@@ -31,12 +31,12 @@ typedef union
 		UInt16 TotalCur;
 		UInt16 ModuleOperateSeq	:8;
 		UInt16 ModuleSeq        :8;
-		UInt16 ModuleType		:8;
-		UInt16 ModuleSwitchCtl	:8;
 		UInt16 ModuleConfigType : 8;
 		UInt16 EFFIntFlag: 8;
 		UInt16 TotalNum : 8;
 		UInt16 : 8;
+		UInt16 ModuleType : 8;
+		UInt16 ModuleSwitchCtl : 8;
 		UInt16 MaximumVol;
 		UInt16 MinimumVol;
 		UInt16 MaximumCur;

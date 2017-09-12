@@ -121,9 +121,11 @@ void DIDOGetInf(void)
 	SET2:
 		BRSET PORTA,#$20,EMERGENCYSTOP
 		BSET DIDOBuff.data[1], #$01
+		BSET CharFaultBuff.data[0], #$02
 		BRA SET3
 	EMERGENCYSTOP:
-		BCLR DIDOBuff.data[1], #$01
+		BCLR DIDOBuff.data[1],#$01
+		BCLR CharFaultBuff.data[0],#$02
 	SET3:
 	}
 	OSCRITICALENTRY();

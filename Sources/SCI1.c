@@ -113,6 +113,7 @@ interrupt void SCI1Meter(void)
 		if ((n < 124) && (IOBufferMonitorBuffer.Compts.FullFlag[4] == 0) && (IOBuffer[4].Rear->RecvFinishedFlag == 0))
 		{
 			((UInt8*)IOBuffer[4].Rear)[n + 4] = SCI1DRL;
+			ComOverTimeBuff.Compts.MeterOverTimeCounter = 0;
 			++n;
 			if (n == 20)
 			{

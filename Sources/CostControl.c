@@ -58,7 +58,7 @@ void CostStateControl(void)
 {
 	if ((BMSComCtlBuff.Compts.SystemState >= 3) && (BMSComCtlBuff.Compts.SystemState <= 4))
 	{
-		if (CostManagementBuff.Compts.CostStartFlag == 0)
+		if ((CostManagementBuff.Compts.CostStartFlag == 0)&&(SCI1OperationBuff.Compts.EngyVal!=0))
 		{
 			CostPretreat();
 		}

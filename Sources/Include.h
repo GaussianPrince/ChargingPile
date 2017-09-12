@@ -29,5 +29,7 @@
 #include "EFlash.h"
 #include "InKePower.h"
 #include "Card.h"
-//#include "HMI.h"
+#include "HMI.h"
+#include "SCI4.h"
+#include "WIFIATH.h"
 #endif

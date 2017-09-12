@@ -45,6 +45,7 @@ void LocalTimeCounter(void)
 			if(LocalTimeBuff.Compts.Hour>22)
 			{
 				LocalTimeBuff.Compts.Hour=0;
+				PwdErrorCounter = 0;
 				++LocalTimeBuff.Compts.PassDay;
 				CalendarCal();
 			}
@@ -57,10 +58,18 @@ void LocalTimeCounter(void)
 		{
 			++LocalTimeBuff.Compts.Minute;
 		}
+		if (BMSComCtlBuff.Compts.SystemState == 3)
+		{
+			CCSData.Compts.TotalChargTime += 1;
+		}
 	}
 	else
 	{
 		++LocalTimeBuff.Compts.Second;
+	}
+	if (BMSComCtlBuff.Compts.SystemState == 3)
+	{
+		CardChargingDuration += 1;
 	}
 	OSCRITICALENTRY();
 }

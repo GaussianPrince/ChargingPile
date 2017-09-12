@@ -207,7 +207,7 @@ static void InfyPowerOffDataLoad(void)
 void InfyPowerOff(void)
 {
 	UInt8 n;
-	if (InfyPowerOperationBuff.Compts.LoopPowerOffFlowFlag == 0)
+	if (InfyPowerOperationBuff.Compts.LoopPowerOffFlowFlag == 0|| CAN0OperationBuff.Compts.ModuleOperateSeq == 2)
 	{
 		InfyPowerOperationBuff.Compts.LoopPowerOffFlowFlag = 1;
 		CAN0OperationBuff.Compts.ModuleSeq = 0;

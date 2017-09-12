@@ -2,10 +2,12 @@
 BMSComCtlStruct BMSComCtlBuff;
 BMSStaMacStruct BMSStaMacBuff[STATENUM];
 CharFaultStruct CharFaultBuff;
+ComOverTime	   ComOverTimeBuff;
 UInt8 CheckEntry(void)
 {
-	if ((BMSComCtlBuff.Compts.CheckFinished == 0)&&(CharFaultBuff.data[0]==0))
+	if ((BMSComCtlBuff.Compts.CheckFinished == 0||BMSComCtlBuff.Compts.ErrorFinished==1)&&(CharFaultBuff.data[0]==0))
 	{
+		BMSComCtlBuff.Compts.ErrorFinished = 0;
 		return 1;
 	}
 	else
@@ -15,7 +17,7 @@ UInt8 CheckEntry(void)
 }
 UInt8 ShakeHandEntry(void)
 {
-	if ((BMSComCtlBuff.Compts.StartCharging == 1) && (BMSComCtlBuff.Compts.ShakeHandFinished == 0)&&(CharFaultBuff.data[0]==0))
+	if ((BMSComCtlBuff.Compts.StartCharging == 1) && (BMSComCtlBuff.Compts.ShakeHandFinished == 0)&&(CharFaultBuff.data[0]==0)&&(GunBuff.Compts.CC1==1))
 	{
 		return 1;
 	}
@@ -94,6 +96,8 @@ void ErrorSetState(void)
 }
 void CheckAction(void)
 {
+	asm BSET DIDOBuff.data[1], #$08;
+	asm BCLR DIDOBuff.data[1], #$14;
 	BMSComCtlBuff.Compts.CheckFinished = 1;
 }
 static UInt16 WaitBRM = 0;
@@ -165,6 +169,18 @@ void ChargingAction(void)
 		CSTData.Compts.BMSActTer = 1;
 		CSTLoad();
 		CAN0OperationBuff.Compts.ModuleSwitchCtl = 2;
+		asm MOVB #$F1, RPAGE;
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Year = (UInt8)(LocalTimeBuff.Compts.Year>>8)+(LocalTimeBuff.Compts.Year<<8);
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Month = LocalTimeBuff.Compts.Month;
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Day = LocalTimeBuff.Compts.Day;
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Hour = LocalTimeBuff.Compts.Hour;
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Minute = LocalTimeBuff.Compts.Minute;
+		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Second = LocalTimeBuff.Compts.Second;
+		SCI4OperatBuff.Compts.NetPriceSyn = 0;
+		SCI4OperatBuff.Compts.NetSerSyn = 0;
+		SCI4OperatBuff.Compts.NetTimeSyn = 0;
+		EFlashOperatBuff.Compts.SerialNumSaveFlag = 1;
+		ChargingEnd = 1;
 		BMSComCtlBuff.Compts.ChargingFinished = 1;
 	}
 	else
@@ -178,13 +194,15 @@ void ChargingAction(void)
 		{
 			WaitBCS++;
 			asm BSET DIDOBuff.data[0], #$01;
-			if ((BCSData.Compts.RecFinish == 1) && (WaitBCS < 600))
+			asm BSET DIDOBuff.data[1], #$10;
+			asm BCLR DIDOBuff.data[1], #$0C;
+			if ((BCSData.Compts.RecFinish == 1) && (WaitBCS < 1000))
 			{
 				BCSData.Compts.RecFinish = 0;
 				WaitBCS = 100;
 				CCSLoad();
 				WaitBSM++;
-				if ((BSM.NewFlag == 1) && (WaitBSM < 600))
+				if ((BSM.NewFlag == 1) && (WaitBSM < 1000))
 				{
 					BSM.NewFlag = 0;
 					WaitBSM = 100;
@@ -196,10 +214,73 @@ void ChargingAction(void)
 						WaitBCS = 0;
 						WaitBSM = 0;
 						CAN0OperationBuff.Compts.ModuleSwitchCtl = 2;
+						asm MOVB #$F1, RPAGE;
+						TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Year = (UInt8)(LocalTimeBuff.Compts.Year >> 8) + (LocalTimeBuff.Compts.Year << 8);
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Month = LocalTimeBuff.Compts.Month;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Day = LocalTimeBuff.Compts.Day;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Hour = LocalTimeBuff.Compts.Hour;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Minute = LocalTimeBuff.Compts.Minute;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Second = LocalTimeBuff.Compts.Second;
+						SCI4OperatBuff.Compts.NetPriceSyn = 0;
+						SCI4OperatBuff.Compts.NetSerSyn = 0;
+						SCI4OperatBuff.Compts.NetTimeSyn = 0;
+						EFlashOperatBuff.Compts.SerialNumSaveFlag = 1;
+						ChargingEnd = 1;
+						BMSComCtlBuff.Compts.ChargingFinished = 1;
+					}
+					if ((HMIOperationBuff.Compts.AutoCharging == 1) && (CostManagementBuff.Compts.CostTotalMoney + CostManagementBuff.Compts.CostServicePrice >= CardOperationBuff.Compts.ResidualMoney))
+					{
+						asm MOVB #$F1, RPAGE;
+						TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Year = (UInt8)(LocalTimeBuff.Compts.Year >> 8) + (LocalTimeBuff.Compts.Year << 8);
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Month = LocalTimeBuff.Compts.Month;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Day = LocalTimeBuff.Compts.Day;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Hour = LocalTimeBuff.Compts.Hour;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Minute = LocalTimeBuff.Compts.Minute;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Second = LocalTimeBuff.Compts.Second;
+						SCI4OperatBuff.Compts.NetPriceSyn = 0;
+						SCI4OperatBuff.Compts.NetSerSyn = 0;
+						SCI4OperatBuff.Compts.NetTimeSyn = 0;
+						EFlashOperatBuff.Compts.SerialNumSaveFlag = 1;
+						CardOperationBuff.Compts.ResidualMoney = 0;
+						CardOperationBuff.Compts.Permission = 1;
+						CardOperationBuff.Compts.PayByCardStart = 1;
+						CSTData.Compts.Other = 1;
+						CSTLoad();
+						WaitBCL = 0;
+						WaitBCS = 0;
+						WaitBSM = 0;
+						CAN0OperationBuff.Compts.ModuleSwitchCtl = 2;
+						ChargingEnd = 1;
+						BMSComCtlBuff.Compts.ChargingFinished = 1;
+					}
+					if ((HMIOperationBuff.Compts.TimingCharging == 1) && (CCSData.Compts.TotalChargTime >= HMIOperationBuff.Compts.ChargingTime))
+					{
+						asm MOVB #$F1, RPAGE;
+						TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Year = (UInt8)(LocalTimeBuff.Compts.Year >> 8) + (LocalTimeBuff.Compts.Year << 8);
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Month = LocalTimeBuff.Compts.Month;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Day = LocalTimeBuff.Compts.Day;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Hour = LocalTimeBuff.Compts.Hour;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Minute = LocalTimeBuff.Compts.Minute;
+                		TimeRecFormatArrBuff.Compts.TimeRecFormatData[1].Compts.Second = LocalTimeBuff.Compts.Second;
+						SCI4OperatBuff.Compts.NetPriceSyn = 0;
+						SCI4OperatBuff.Compts.NetSerSyn = 0;
+						SCI4OperatBuff.Compts.NetTimeSyn = 0;
+						EFlashOperatBuff.Compts.SerialNumSaveFlag = 1;
+						CardOperationBuff.Compts.ResidualMoney -= (CostManagementBuff.Compts.CostTotalMoney + CostManagementBuff.Compts.CostServicePrice);
+						CardOperationBuff.Compts.ResidualMoney = 0;
+						CardOperationBuff.Compts.Permission = 1;
+						CardOperationBuff.Compts.PayByCardStart = 1;
+						CSTData.Compts.Other = 1;
+						CSTLoad();
+						WaitBCL = 0;
+						WaitBCS = 0;
+						WaitBSM = 0;
+						CAN0OperationBuff.Compts.ModuleSwitchCtl = 2;
+						ChargingEnd = 1;
 						BMSComCtlBuff.Compts.ChargingFinished = 1;
 					}
 				}
-				else if(WaitBSM>=600)
+				else if(WaitBSM>=1000)
 				{
 					WaitBCL = 0;
 					WaitBCS = 0;
@@ -207,7 +288,7 @@ void ChargingAction(void)
 					CharFaultBuff.Compts.BMSComFault = 1;
 				}
 			}
-			else if (WaitBCS >= 600)
+			else if (WaitBCS >= 1000)
 			{
 				WaitBCL = 0;
 				WaitBCS = 0;
@@ -224,7 +305,7 @@ void ChargingAction(void)
 		}
 	}
 }
-static WaitBST = 0,WaitBSD=0;
+static WaitBST = 0;
 void EndAction(void)
 {
 	if ((BST.NewFlag == 0) && (WaitBST < 1000))
@@ -234,37 +315,31 @@ void EndAction(void)
 	}
 	else if ((BST.NewFlag == 1) && (WaitBST < 1000))
 	{
-		WaitBSD++;
-		if ((BSD.NewFlag == 0)&&(WaitBSD<600))
+		CSDLoad();
+		WaitBST = 0;
+		if ((CAN0OperationBuff.Compts.TotalCur < 30) && (CAN0OperationBuff.Compts.TotalVol < 2500))
 		{
-			CSDLoad();
-		}
-		else if ((BSD.NewFlag == 1) && (WaitBSD <600))
-		{
-			WaitBSD =0;
-			WaitBST = 0;
-			if ((CAN0OperationBuff.Compts.TotalCur < 30)&&(CAN0OperationBuff.Compts.TotalVol<200))
+			asm BCLR DIDOBuff.data[0], #$0C;
+			asm BSET DIDOBuff.data[0], #$10;
+			if (CAN0OperationBuff.Compts.TotalVol < 120)
 			{
-				asm BCLR DIDOBuff.data[0], #$0C;
-				asm BSET DIDOBuff.data[0], #$10;
-				if (CAN0OperationBuff.Compts.TotalVol < 120)
-				{
-					asm BCLR DIDOBuff.data[0], #$3F;
-					BMSComCtlBuff.Compts.EndFinished = 1;
-				}
+				asm BCLR DIDOBuff.data[0], #$3F;
+				BMSComCtlBuff.Compts.EndFinished = 1;
 			}
 		}
-		else if ((WaitBSD>=600))
-		{
-			WaitBSD = 0;
-			WaitBST = 0;
-			CharFaultBuff.Compts.BMSComFault = 1;
-		}
+	}
+	else if (WaitBST >= 1000)
+	{
+		WaitBST = 0;
+		CharFaultBuff.Compts.BMSComFault = 1;
 	}
 }
 void ErrorAction(void)
 {
 	asm BCLR DIDOBuff.data[0], #$0F;
+	asm BSET DIDOBuff.data[1], #$04;
+	asm BCLR DIDOBuff.data[1], #$18;
+	asm  BCLR BMSComCtlBuff.data[1],#$DF;
 	CAN0OperationBuff.Compts.ModuleSwitchCtl = 2;//Set switch 
 	BMSComCtlBuff.Compts.ErrorFinished = 1;
 }
@@ -334,4 +409,78 @@ void ChargingStateControl(void)
 		}
 	}
 	OSCRITICALENTRY();
+}
+void ComFaultStateControl(void)
+{
+	asm MOVB #$F1, RPAGE;
+	if ((CardOperationBuff.Compts.QueryInf == 0)&&(CardOperationBuff.Compts.CardSystate!=203))
+	{
+		if (ComOverTimeBuff.Compts.CardOverTimeCounter > 20)
+		{
+			asm MOVB #$F0, RPAGE;
+			if ((HMIOperationBuff.Compts.CurrentPageNum != 21)&&(HMIOperationBuff.Compts.CurrentPageNum != 14)&&(HMIOperationBuff.Compts.CurrentPageNum != 16))
+			{
+				CharFaultBuff.Compts.CardFault = 1;
+			}
+			else
+			{
+				ComOverTimeBuff.Compts.CardOverTimeCounter = 0;
+			}
+		}
+		else
+		{
+			CharFaultBuff.Compts.CardFault = 0;
+			ComOverTimeBuff.Compts.CardOverTimeCounter++;
+		}
+	}
+	if (ComOverTimeBuff.Compts.MeterOverTimeCounter > 20)
+	{
+		CharFaultBuff.Compts.MeterFault = 1;
+	}
+	else
+	{
+		CharFaultBuff.Compts.MeterFault = 0;
+		ComOverTimeBuff.Compts.MeterOverTimeCounter++;
+	}
+	if (ComOverTimeBuff.Compts.PowerOverTimeCounter > 20)
+	{
+		CharFaultBuff.Compts.PowerModuleFault = 1;
+	}
+	else
+	{
+		CharFaultBuff.Compts.PowerModuleFault = 0;
+		ComOverTimeBuff.Compts.PowerOverTimeCounter++;
+	}
+}
+void ClearChargingControlData(void)
+{
+	CHM.NewFlag = 0;
+	BHM.NewFlag = 0;
+	CRM.NewFlag = 0;
+	CTS.NewFlag = 0;
+	CML.NewFlag = 0;
+	BRO.NewFlag = 0;
+	CRO.NewFlag = 0;
+	BCL.NewFlag = 0;
+	BSM.NewFlag = 0;
+	BSP.NewFlag = 0;
+	BST.NewFlag = 0;
+	CST.NewFlag = 0;
+	BSD.NewFlag = 0;
+	CSD.NewFlag = 0;
+	TPCMCTS.NewFlag = 0;
+	TPCMRTS.NewFlag = 0;
+	TPCMDT.NewFlag = 0;
+	BRMData.Compts.RecFinish = 0;
+	BCPData.Compts.RecFinish = 0;
+	BCSData.Compts.RecFinish = 0;
+	CostManagementBuff.Compts.CostStartFlag = 0;
+	WaitInHome=0;
+	WaitBackHome = 0;
+	CardChargingDuration = 0;
+	CCSData.Compts.TotalChargTime = 0;
+	BMSComCtlBuffInit();
+	CAN0OperationBuffInit();
+	MyMemsetFar(CardOperationBuff.data, 0, 30);
+	MyMemsetFar(HMIOperationBuff.data, 0, 21);
 }

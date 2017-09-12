@@ -1,5 +1,6 @@
 #ifndef _CARD_H
 #define _CARD_H
+//#define  PAYCOUNTER
 #include "Include.h"
 typedef union 
 {
@@ -92,33 +93,42 @@ typedef union
 }M1Write8;
 typedef union 
 {
-	UInt8 data[15];
+	UInt8 data[30];
 	struct 
 	{
-		UInt8	ReadUIDSuccessfully : 1;
-		UInt8	ReadMoneySuccessfully : 1;
-		UInt8	ReadUserIDSuccessfully : 1;
-		UInt8	WriteBlock2Successfully : 1;
-		UInt8	WriteBlock8Successfully : 1;
-		UInt8	CardEnable : 1;
-		UInt8	PayByCardStart : 1;
-		UInt8 : 1;
-		UInt8   CardSystate;
-		UInt8	CardCode;
-		UInt8	CardPermission;
-		UInt32	UserID;
-		UInt32  CardID;
-		UInt32	ResidualMoney;
+		UInt8  QueryInf : 1;
+		UInt8  PerOp : 1;
+		UInt8  FeeOp : 1;
+		UInt8  PayByCardStart : 1;
+		UInt8 : 4;
+		UInt8  CardWaitHome;
+		UInt8  CardSystate;
+		UInt8  CardSystateOld;
+		UInt8  Permission;
+		UInt8  PermissionOld;
+		UInt32 UserID;
+		UInt32 UserIDOld;
+		UInt32 CardID;
+		UInt32 CardIDOld;
+		UInt32 ResidualMoney;
+		UInt32 ResidualMoneyOld;
 	}Compts;
-}CardOperat;
+}CardOperation;
 #pragma DATA_SEG __RPAGE_SEG     RAMF1_T
 extern QueryLabel	 QueryLabelCmd;
 extern M1Read2		 M1ReadCmd2;
 extern M1Read8		 M1ReadCmd8;
 extern M1Write2		 M1WriteCmd2;
 extern M1Write8		 M1WriteCmd8;
-extern CardOperat	 CardOperatBuff;
-extern UInt16		 CardCheckTem;
+extern CardOperation	 CardOperationBuff;
+extern UInt16		CardCheckTem;
+extern UInt32		CostCalTmp;
+extern UInt8        CardMutex;
+extern UInt8		FaultPay;
+extern UInt8		FaultEcho;
+#ifdef PAYCOUNTER
+extern UInt8		PayCounter;
+#endif
 #pragma DATA_SEG DEFAULT
 extern DataConvert	 UserMoneyConvert;
 extern DataConvert	 CardIDConvert;
@@ -126,6 +136,7 @@ extern DataConvert	 UserIDConvert;
 extern void SCI5SendN(UInt8 * far InData, UInt8 Len);
 extern void SCI5Init(void);
 extern UInt16 CardCalCRC(UInt8 *far UnProcess, UInt8 Len);
+extern void MyMemsetFar(UInt8 *far InData, UInt8 Val, UInt8 Len);
 extern void CardAnalysis(void);
 extern void CardStateControl(void);
 #endif

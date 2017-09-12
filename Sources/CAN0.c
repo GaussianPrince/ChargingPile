@@ -116,11 +116,11 @@ void AllModuleTypeInit(void)
 void CAN0OperationBuffInit(void)
 {
 	UInt8 n;
-	for (n = 0; n < 5; n++)
+	for (n = 0; n < 3; n++)
 	{
 		CAN0OperationBuff.data[n] = 0;
 	}
-	CAN0OperationBuff.Compts.ModuleSwitchCtl = 3;
+	//CAN0OperationBuff.Compts.ModuleSwitchCtl = 3;
 	//For each module
 	//CAN0OperationBuff.Compts.MaximumVol = 750;	//Unit 'V'
 	//CAN0OperationBuff.Compts.MaximumCur = 20;	//Unit 'A'
@@ -209,6 +209,7 @@ void PowerStateControl(void)
 interrupt void CAN0Power(void)
 {
 	asm INC OSNesting;
+	ComOverTimeBuff.Compts.PowerOverTimeCounter = 0;
 	if (CAN0OperationBuff.Compts.ModuleSwitchCtl == 0)
 	{
 		if ((InfyModuleNumReply.CANID.ID.ID1 == CAN0RXIDR0) && (InfyModuleNumReply.CANID.ID.ID2 == CAN0RXIDR1))
